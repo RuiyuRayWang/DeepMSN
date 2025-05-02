@@ -33,10 +33,10 @@ Refer to https://pytorch.org/get-started/ for instructions to install pytorch.
 
 3. Run training:
    ```bash
-   python scripts/train.py
+   python train.py
    ```
 
-4. Evaluate the model:
+4. # TODO: Evaluate the model:
    ```bash
    python scripts/evaluate.py
    ```
