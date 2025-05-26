@@ -20,18 +20,16 @@ DeepMSN/
 1. Install dependencies:
 Refer to https://pytorch.org/get-started/ for instructions to install pytorch.
 
-2. Run tests:
-   ```bash
-   conda activate deepmsn
-   python -m unittest test.test_data_loader
+2. Preprocess data:
+   Edit `configs/config.yaml`
    
-   # Run single test case
-   python -m unittest tests.test_data_loader.TestDummyDataLoader.test_load_dummy_data
-
-   (deepmsn) luolab@luolab-X11DAi-N:~/GITHUB_REPOS/DeepMSN$ python -m unittest test.test_deepmsn_model
+   Do preprocessing in command line:
+   ```bash
+   $ conda activate deepmsn
+   (deepmsn)$ python -m scripts.preprocess -c configs/config.yaml
    ```
 
-3. Run training:
+3. # TODO: Run training:
    ```bash
    python train.py
    ```
