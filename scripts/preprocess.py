@@ -61,6 +61,8 @@ if __name__ == "__main__":
     with open(config_path) as f:
         config = yaml.safe_load(f)
     config = config['dataset'] if 'dataset' in config else config
+    out_dir = config.get('out_dir', 'output')
+    out_fn = config.get('out_fn', 'regions_and_topics.bed')
 
     num_topics = len(config['data_path'])
     genome_fasta = config['genome_fasta']
@@ -75,14 +77,14 @@ if __name__ == "__main__":
         
     write_regions_and_topics_to_bed(
         regions_and_topics = regions_and_topics_clean,
-        out_bed = os.path.join(config['out_dir'], 'regions_and_topics.bed')
+        out_bed = os.path.join(out_dir, out_fn)
         )
 
     if args.sort:
         print("Sorting the regions and topics in the BED file.")
         import pybedtools
-        sorted_bed = pybedtools.BedTool(os.path.join(config['out_dir'], 'regions_and_topics.bed')).sort()
-        sorted_bed.saveas(os.path.join(config['out_dir'], 'regions_and_topics_sorted.bed'))
-        os.remove(os.path.join(config['out_dir'], 'regions_and_topics.bed'))
+        sorted_bed = pybedtools.BedTool(os.path.join(out_dir, out_fn)).sort()
+        sorted_bed.saveas(os.path.join(out_dir, out_fn.replace('.bed', '_sorted.bed')))
+        os.remove(os.path.join(out_dir, out_fn))
     
     print("Preprocessing completed successfully.")

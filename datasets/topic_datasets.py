@@ -17,8 +17,8 @@ class TopicDataset(Dataset):
         self.genome_fasta = genome
         self.bed_entries = list(pybedtools.BedTool(region_topic_bed))  # Convert BedTool to a list of entries
         self.transform = transform or one_hot_encode
-        num_topics = 35
-        self.target_transform = target_transform or (lambda label: torch.tensor([int(i in label) for i in map(str, range(num_topics))], dtype=torch.float32))
+        num_topics = 18
+        self.target_transform = target_transform or (lambda label: torch.tensor([int(i in label) for i in map(str, range(num_topics))], dtype=torch.int))
     
     def __len__(self):
         """
@@ -55,4 +55,4 @@ class TopicDataset(Dataset):
         
         fasta.close()
         
-        return sequence, topic_vector
+        return {'sequence': sequence, 'label': topic_vector}

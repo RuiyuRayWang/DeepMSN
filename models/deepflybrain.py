@@ -16,7 +16,7 @@ class DeepFlyBrain(nn.Module):
         self.flatten_1 = nn.Flatten()
         self.dense_2 = nn.Linear(128 * 2 * 41, 256)  # Adjust input size based on the output of LSTM
         self.dropout_3 = nn.Dropout(0.4)
-        self.dense_3 = nn.Linear(256 * 2, 2)  # Adjust input size based on concatenation
+        self.dense_3 = nn.Linear(256 * 2, 18)  # Adjust input size based on concatenation
         self.sigmoid_1 = nn.Sigmoid()
 
     def forward(self, x):

@@ -18,15 +18,18 @@ DeepFlyBrain/
 ## Getting Started
 
 1. Install dependencies:
-Refer to https://pytorch.org/get-started/ for instructions to install pytorch.
+   ```bash
+   $ conda activate deepmsn
+   (deepmsn) $ pip install -r requirements.txt 
+   (deepmsn) $ conda install bedtools
+   ```
 
 2. Preprocess data:
    Edit `configs/config.yaml`
    
    Do preprocessing in command line:
    ```bash
-   $ conda activate DeepFlyBrain
-   (DeepFlyBrain)$ python -m scripts.preprocess -c configs/config.yaml
+   (deepmsn)$ python -m scripts.preprocess -c configs/config.yaml --sort
    ```
 
 3. # TODO: Run training:

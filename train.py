@@ -87,7 +87,7 @@ if __name__ == "__main__":
     loss_function = nn.BCELoss()
     
     # Initialize optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
