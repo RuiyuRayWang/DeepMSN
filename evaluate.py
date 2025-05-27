@@ -1,5 +1,5 @@
 import torch
-from models.deepmsn import DeepMSN
+from models.deepflybrain import DeepFlyBrain
 from dataloaders.data_loader import load_data
 
 def evaluate():
@@ -7,7 +7,7 @@ def evaluate():
     _, test_loader = load_data()
 
     # Load model
-    model = DeepMSN()
+    model = DeepFlyBrain()
     model.load_state_dict(torch.load("model.pth"))
     model.eval()
 

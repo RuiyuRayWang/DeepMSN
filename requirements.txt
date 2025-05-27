@@ -1,9 +1,10 @@
 torch
 torchvision
-numpy
+numpy==2.1.2
 pandas
 scikit-learn
 matplotlib
-biopython
-pybedtools
-pysam
+biopython==1.85
+pybedtools==0.12.0
+pysam==0.23.0
+pyfaidx==0.8.1.4

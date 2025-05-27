@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from datasets.msn_datasets import TestDataset
-from models.deepmsn import DeepMSN
+from datasets.topic_datasets import TopicDataset
+from models.deepflybrain import DeepFlyBrain
 
 device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 print(f"Using {device} device")
@@ -51,6 +51,7 @@ if __name__ == "__main__":
     
     # Hyperparameters
     learning_rate = 1e-3
+    weight_decay = 1e-2
     batch_size = 32
     epochs = 100
     
@@ -58,11 +59,11 @@ if __name__ == "__main__":
     torch.manual_seed(42)
     
     # Prepare dataset
-    dataset = TestDataset(
-       "data/test_data/filt_peaks_catlas_multiome.blacklist_filtered.ATCG.clean.srted.fa",
-       "data/test_data/filt_peaks_catlas_multiome.blacklist_filtered.ATCG.clean.srted.bed",
-       transform=None,
-       target_transform=None
+    dataset = TopicDataset(
+        genome='data/resources/mm10.fa',
+        region_topic_bed='data/CTdnsmpl_catlas_35_Topics_top_3k/regions_and_topics_sorted.bed',
+        transform=None,  # Use default one-hot encoding
+        target_transform=None  # Use default target transformation
     )
     
     # Split dataset into training and testing sets
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         break
     
     # Initialize the model
-    model = DeepMSN().to(device)
+    model = DeepFlyBrain().to(device)
     
     # Define loss function
     loss_function = nn.BCELoss()

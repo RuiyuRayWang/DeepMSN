@@ -1,11 +1,11 @@
-# DeepMSN
+# DeepFlyBrain
 
-This project implements the DeepMSN model using PyTorch.
+This project implements the DeepFlyBrain model using PyTorch.
 
 ## Directory Structure
 
 ```
-DeepMSN/
+DeepFlyBrain/
 ├── datasets/               # Dataset storage
 ├── models/             # Model definitions
 ├── notebooks/          # Jupyter notebooks for experiments
@@ -25,8 +25,8 @@ Refer to https://pytorch.org/get-started/ for instructions to install pytorch.
    
    Do preprocessing in command line:
    ```bash
-   $ conda activate deepmsn
-   (deepmsn)$ python -m scripts.preprocess -c configs/config.yaml
+   $ conda activate DeepFlyBrain
+   (DeepFlyBrain)$ python -m scripts.preprocess -c configs/config.yaml
    ```
 
 3. # TODO: Run training:

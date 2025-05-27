@@ -2,14 +2,14 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from datasets.msn_datasets import TestDataset
-from models.deepmsn import DeepMSN
+from models.deepflybrain import DeepFlyBrain
 from sklearn.model_selection import KFold
 
 
 device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 print(f"Using {device} device")
 
-model = DeepMSN().to(device)
+model = DeepFlyBrain().to(device)
 print(f"Model structure: {model}\n\n")
 
 X = torch.rand(32, 500, 4, device=device)
@@ -81,7 +81,7 @@ for name, param in model.named_parameters():
 #         )
         
 #         # Init the neural network
-#         network = DeepMSN()
+#         network = DeepFlyBrain()
 #         network.apply(reset_weights)
         
 #         # Initialize optimizer
