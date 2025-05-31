@@ -4,7 +4,7 @@ def one_hot_encode(sequence):
     mapping = {'A': [1, 0, 0, 0], 'C': [0, 1, 0, 0], 'G': [0, 0, 1, 0], 'T': [0, 0, 0, 1],
                'a': [1, 0, 0, 0], 'c': [0, 1, 0, 0], 'g': [0, 0, 1, 0], 't': [0, 0, 0, 1]}
     one_hot_encoded = [mapping[base] for seq in sequence for base in seq]
-    return torch.tensor(one_hot_encoded, dtype=torch.int)
+    return torch.tensor(one_hot_encoded, dtype=torch.float32)
 
 def decode_one_hot(one_hot_sequence):
     mapping = ['A', 'C', 'G', 'T']
@@ -17,8 +17,8 @@ def decode_one_hot(one_hot_sequence):
     else:
         raise ValueError("Input tensor must be 2D or 3D.")
 
-def reverse_complement(x):
-    # Reverse the sequence batch-wise
-    x = torch.flip(x, dims=[1])  # x is expected to be of shape (batch_size, seq_length, 4)
-    x = torch.stack([x[:, :, 3], x[:, :, 2], x[:, :, 1], x[:, :, 0]], dim=-1)  # Complement the sequence (A<->T, C<->G)
-    return x
+# def reverse_complement(x):
+#     # Reverse the sequence batch-wise
+#     x = torch.flip(x, dims=[1])  # x is expected to be of shape (batch_size, seq_length, 4)
+#     x = torch.stack([x[:, :, 3], x[:, :, 2], x[:, :, 1], x[:, :, 0]], dim=-1)  # Complement the sequence (A<->T, C<->G)
+#     return x

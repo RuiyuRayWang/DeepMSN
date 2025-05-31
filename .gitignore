@@ -1,7 +1,7 @@
 data/*
 !data/README.md
 */__pycache__/
-models/state_dict/*
+checkpoints/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
