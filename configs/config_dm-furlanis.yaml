@@ -1,0 +1,36 @@
+name: 'furlanis'
+tmp_dir: '/tmp'
+dataset:
+  data_path:
+    - ['data/Furlanis_Topics_top_3k/bed/Topic1.bed', 0]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic2.bed', 1]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic3.bed', 2]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic4.bed', 3]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic5.bed', 4]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic6.bed', 5]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic7.bed', 6]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic8.bed', 7]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic9.bed', 8]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic10.bed', 9]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic11.bed', 10]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic12.bed', 11]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic13.bed', 12]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic14.bed', 13]
+    - ['data/Furlanis_Topics_top_3k/bed/Topic15.bed', 14]
+  genome_fasta: 'data/resources/mm10.fa'
+  chrom_sizes: 'data/resources/mm10.chrom.sizes'
+  out_dir: 'data/Furlanis_Topics_top_3k'
+  out_fn: 'regions_and_topics.bed'
+train:
+  model: 'DeepMSN'
+  lr_init: 3e-4
+  decay_rate: 0.333
+  weight_decay: 1e-2
+  batch_size: 64
+  epochs: 1000
+  num_workers: 1
+  save_every_n_epochs: 100
+  resume_from_checkpoint: False
+  checkpoint:
+    path: 'checkpoints/dm_furlanis_2025-05-30_06-16-37'
+    resume_from_epoch: 200

@@ -1,24 +1,37 @@
 import torch
 from torch.utils.data import Dataset
+import os
 import pybedtools
 from pyfaidx import Fasta
 from utils.utils import one_hot_encode
 
 class TopicDataset(Dataset):
-    # Input is a dictionary of bed files with labels.
-    def __init__(self, genome, region_topic_bed, transform=None, target_transform=None):
+    def __init__(self, config, augment=False, transform=None, target_transform=None):
+    # def __init__(self, genome, region_topic_bed, num_topics=None, transform=None, target_transform=None):
         """
         Initialize the dataset with data and labels.
-        :param genome: Path to the genome FASTA file.
-        :param region_topic_bed: Path to the BED file containing genomic regions and their associated topics.
+        :param config: Configuration dictionary containing dataset parameters
         :param transform: Function to transform the sequence (e.g., one-hot encoding).
         :param target_transform: Function to transform the label.
         """
-        self.genome_fasta = genome
-        self.bed_entries = list(pybedtools.BedTool(region_topic_bed))  # Convert BedTool to a list of entries
+        self.config = config.get('dataset', {})
+        self.augment = augment
+        self.augment_kwargs = config.get('augment_kwargs', {})
+        
+        # Get path to genome fasta from config
+        self.genome_fasta = self.config.get('genome_fasta', None)
+        
+        # Load bed entries from config-specified path
+        bed_file_path = os.path.join(self.config.('out_dir', '.'), self.config.get('out_fn', 'regions_and_topics.bed'))
+        self.bed_entries = list(pybedtools.BedTool(bed_file_path))
+        
         self.transform = transform or one_hot_encode
-        num_topics = 18
-        self.target_transform = target_transform or (lambda label: torch.tensor([int(i in label) for i in map(str, range(num_topics))], dtype=torch.int))
+        
+        # Get number of topics from config data_path
+        num_topics = len(self.config.get('data_path', [])) if self.config.get('data_path') else 0
+        if num_topics == 0:
+            raise ValueError("Number of topics must be specified in the configuration.")
+        self.target_transform = target_transform or (lambda label: torch.tensor([int(i in label) for i in map(str, range(num_topics))], dtype=torch.float))
     
     def __len__(self):
         """
@@ -41,6 +54,8 @@ class TopicDataset(Dataset):
         start = bed_entry.start
         end = bed_entry.end
         
+        if self.augment:
+            
         # Extract the sequence from the fasta file
         seq = str(fasta[chrom][start:end]).upper()
         
@@ -55,4 +70,11 @@ class TopicDataset(Dataset):
         
         fasta.close()
         
-        return {'sequence': sequence, 'label': topic_vector}
+        return {
+            'chrom': chrom,
+            'start': start,
+            'end': end,
+            'sequence': sequence, 
+            'label': topic_vector,
+            'index': idx
+        }
