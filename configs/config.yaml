@@ -1,5 +1,3 @@
-name: "ctdnsmpl"
-tmp_dir: '/tmp'
 dataset:
   data_path:
     # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic1.bed', 0]
@@ -41,16 +39,21 @@ dataset:
   chrom_sizes: 'data/resources/mm10.chrom.sizes'
   out_dir: 'data/CTdnsmpl_catlas_35_Topics_top_3k'
   out_fn: 'regions_and_topics.bed'
+  augment_kwargs:
+    extension_bp: 100
+    window_size: 500
+    stride: 50
+    min_overlap: 0.6
 train:
   model: 'DeepMSN'
   lr_init: 3e-4
   decay_rate: 0.333
   weight_decay: 1e-2
   batch_size: 64
-  epochs: 2000
+  epochs: 1000
   num_workers: 1
   save_every_n_epochs: 100
-  resume_from_checkpoint: True
+  resume_from_checkpoint: False
   checkpoint:
-    path: 'checkpoints/dm_ctdnsmpl_3k_2025-05-30_03-28-45'
+    path: 
     resume_from_epoch: 500

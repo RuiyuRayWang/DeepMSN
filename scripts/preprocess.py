@@ -4,7 +4,6 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
-import pybedtools
 from pyfaidx import Fasta
 
 def parse_bed_files(bed_files):
@@ -29,12 +28,12 @@ def clean_bed_entries(regions_and_topics, genome_fasta, thread_pool_size=8):
     fasta = Fasta(genome_fasta)
     valid_bases = {'A', 'T', 'C', 'G'}
     cleaned = []
-    
+
     def is_valid(args):
         (chrom, start, end), topic_list = args
         seq = str(fasta[chrom][start:end]).upper()
         return set(seq).issubset(valid_bases)
-    
+
     print(f"Cleaning sequences for {len(regions_and_topics)} regions.")
     with ThreadPoolExecutor(max_workers=thread_pool_size) as executor:
         results = list(tqdm(executor.map(is_valid, regions_and_topics), total=len(regions_and_topics), desc="Validating sequences"))
@@ -55,38 +54,37 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preprocess genomic data.")
     parser.add_argument('-c', '--config', type=str, required=True, help='Path to the config file.')
     parser.add_argument('-t', '--thread_pool_size', type=int, default=8, help='Number of threads for parallel processing.')
+    parser.add_argument('--sort', action='store_true', help='Sort the regions and topics before writing to bed file.')
     args = parser.parse_args()
-    
+
     config_path = args.config
     with open(config_path) as f:
         config = yaml.safe_load(f)
-    tmp_dir = config.get('tmp_dir', '/tmp')
-    
-    config_ds = config['dataset'] if 'dataset' in config else config
-    out_dir = config_ds.get('out_dir', './output')
-    out_fn = config_ds.get('out_fn', 'regions_and_topics.bed')
-    
-    num_topics = len(config_ds['data_path'])
-    genome_fasta = config_ds['genome_fasta']
-    region_to_topics = parse_bed_files(config_ds['data_path'])
+    config = config['dataset'] if 'dataset' in config else config
+    out_dir = config.get('out_dir', 'output')
+    out_fn = config.get('out_fn', 'regions_and_topics.bed')
+
+    num_topics = len(config['data_path'])
+    genome_fasta = config['genome_fasta']
+    region_to_topics = parse_bed_files(config['data_path'])
     regions_and_topics = list(region_to_topics.items())
-    
+
     regions_and_topics_clean = clean_bed_entries(
         regions_and_topics = regions_and_topics, 
         genome_fasta = genome_fasta, 
         thread_pool_size=args.thread_pool_size
-    )
-    
+        )
+        
     write_regions_and_topics_to_bed(
         regions_and_topics = regions_and_topics_clean,
-        out_bed = os.path.join(tmp_dir, out_fn)
-    )
-    
-    print("Sorting the regions and topics in the BED file.")
-    sorted_bed = pybedtools.BedTool(os.path.join(tmp_dir, out_fn)).sort()
-    sorted_bed.saveas(os.path.join(out_dir, out_fn))
-    
-    # Clean up temporary files
-    os.remove(os.path.join(tmp_dir, out_fn))
+        out_bed = os.path.join(out_dir, out_fn)
+        )
+
+    if args.sort:
+        print("Sorting the regions and topics in the BED file.")
+        import pybedtools
+        sorted_bed = pybedtools.BedTool(os.path.join(out_dir, out_fn)).sort()
+        sorted_bed.saveas(os.path.join(out_dir, out_fn.replace('.bed', '_sorted.bed')))
+        os.remove(os.path.join(out_dir, out_fn))
     
     print("Preprocessing completed successfully.")
