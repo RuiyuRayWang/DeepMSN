@@ -1,59 +1,58 @@
+name: "pb_ctdnsmpl"
+tmp_dir: '/tmp'
 dataset:
-  data_path:
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic1.bed', 0]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic2.bed', 1]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic3.bed', 2]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic4.bed', 3]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic5.bed', 0]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic6.bed', 5]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic7.bed', 6]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic8.bed', 1]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic9.bed', 2]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic10.bed', 3]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic11.bed', 4]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic12.bed', 5]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic13.bed', 12]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic14.bed', 13]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic15.bed', 14]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic16.bed', 6]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic17.bed', 16]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic18.bed', 7]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic19.bed', 8]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic20.bed', 19]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic21.bed', 9]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic22.bed', 10]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic23.bed', 11]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic24.bed', 12]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic25.bed', 13]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic26.bed', 25]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic27.bed', 26]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic28.bed', 27]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic29.bed', 14]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic30.bed', 29]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic31.bed', 30]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic32.bed', 15]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic33.bed', 16]
-    - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic34.bed', 17]
-    # - ['data/CTdnsmpl_catlas_35_Topics_top_3k/bed/Topic35.bed', 34]
   genome_fasta: 'data/resources/mm10.fa'
   chrom_sizes: 'data/resources/mm10.chrom.sizes'
-  out_dir: 'data/CTdnsmpl_catlas_35_Topics_top_3k'
+  out_dir: 'data/PB_CTdnsmpl_catlas_25_Topics_top_3k_5fold-rc'
   out_fn: 'regions_and_topics.bed'
+  bed_file:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  random_seed: 42
+  augment: True
   augment_kwargs:
-    extension_bp: 100
+    random_shift: True
+    num_windows: 5
+    extension: 100
     window_size: 500
     stride: 50
-    min_overlap: 0.6
+  rc: True  # reverse complement
+  data_path:
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic1.bed', 0]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic2.bed', 1]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic3.bed', 2]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic4.bed', 3]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic5.bed', 4]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic6.bed', 5]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic7.bed', 6]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic8.bed', 7]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic9.bed', 8]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic10.bed', 9]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic11.bed', 10]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic12.bed', 11]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic13.bed', 12]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic14.bed', 13]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic15.bed', 14]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic16.bed', 15]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic17.bed', 16]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic18.bed', 17]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic19.bed', 18]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic20.bed', 19]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic21.bed', 20]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic22.bed', 21]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic23.bed', 22]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic24.bed', 23]
+    - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic25.bed', 24]
 train:
   model: 'DeepMSN'
   lr_init: 3e-4
   decay_rate: 0.333
   weight_decay: 1e-2
   batch_size: 64
-  epochs: 1000
+  epochs: 200
   num_workers: 1
-  save_every_n_epochs: 100
-  resume_from_checkpoint: False
+  save_every_n_epochs: 50
+  resume_from_checkpoint: True
   checkpoint:
-    path: 
-    resume_from_epoch: 500
+    path: 'checkpoints/dm_pb_ctdnsmpl_augmented_2025-06-03_08-37-49'
+    resume_from_epoch: 50

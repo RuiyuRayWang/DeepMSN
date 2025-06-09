@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 class DeepMSN(nn.Module):
-    def __init__(self, config, embed_dim=128, internal_emb_dim=256, early_hidden_dim=256, num_early_lyr=2, dropout=0.5,
+    def __init__(self, config, embed_dim=128, internal_emb_dim=256, early_hidden_dim=256, num_early_lyr=2, dropout=0.3,
                  tsfm_hidden_dim=512, num_tsfm_layers=6, num_heads=8, num_reg_tok=1):
         
         super().__init__()

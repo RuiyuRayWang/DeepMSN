@@ -2,6 +2,12 @@ data/*
 !data/README.md
 */__pycache__/
 checkpoints/*
+!checkpoints/README.md
+configs/*
+!configs/config.yaml
+logs/*
+notebooks/*
+!/notebooks/README.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

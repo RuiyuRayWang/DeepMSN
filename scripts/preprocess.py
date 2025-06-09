@@ -385,6 +385,10 @@ if __name__ == "__main__":
         (test_regions, test_fn, "test")
     ]
     
+    # If augmenting, append the original training regions as well
+    if augment:
+        datasets.append((train_regions, train_fn.replace('.bed', '_original.bed'), "train_original"))
+    
     for regions, filename, dataset_name in datasets:
         temp_file = os.path.join(tmp_dir, filename)
         final_file = os.path.join(out_dir, filename)
