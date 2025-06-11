@@ -1,1 +1,3 @@
-Checkpoints.
+# DeepMSN/checkpoints
+
+Training checkpoints.

@@ -1,4 +1,5 @@
 data/*
+dataloader/*
 !data/README.md
 */__pycache__/
 checkpoints/*

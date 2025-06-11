@@ -1,8 +1,8 @@
 import torch
 
 def one_hot_encode(sequence):
-    mapping = {'A': [1, 0, 0, 0], 'C': [0, 1, 0, 0], 'G': [0, 0, 1, 0], 'T': [0, 0, 0, 1],
-               'a': [1, 0, 0, 0], 'c': [0, 1, 0, 0], 'g': [0, 0, 1, 0], 't': [0, 0, 0, 1]}
+    mapping = {'A': [1, 0, 0, 0], 'C': [0, 1, 0, 0], 'G': [0, 0, 1, 0], 'T': [0, 0, 0, 1], 'N': [1/4, 1/4, 1/4, 1/4],
+               'a': [1, 0, 0, 0], 'c': [0, 1, 0, 0], 'g': [0, 0, 1, 0], 't': [0, 0, 0, 1], 'n': [1/4, 1/4, 1/4, 1/4]}
     one_hot_encoded = [mapping[base] for seq in sequence for base in seq]
     return torch.tensor(one_hot_encoded, dtype=torch.float32)
 

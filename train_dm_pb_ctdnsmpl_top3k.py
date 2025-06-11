@@ -18,7 +18,7 @@ if __name__ == "__main__":
     torch.manual_seed(42)
     
     # Load config
-    with open('configs/dm_pb_ctdnsmpl_augmented_2025-06-03_08-37-49.yaml', 'r') as f:
+    with open('configs/config.yaml', 'r') as f:
         config = yaml.safe_load(f)
     
     # Hyperparameters
@@ -154,12 +154,13 @@ if __name__ == "__main__":
             print(f"Copied preprocessing info to checkpoint directory")
     
     # Create balanced loss function
-    pos_weight = torch.ones(len(config['dataset']['data_path'])) * 5.0
+    pos_weight = torch.ones(len(config['dataset']['data_path'])) * 10.0
     print(f"Using pos_weight: {pos_weight[0]:.1f}")
     
     # Define loss function
     loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
     # loss_fn = nn.BCEWithLogitsLoss()
+    # loss_fn = nn.BCELoss()
     
     # Tracking for analysis
     train_losses = []
@@ -363,10 +364,10 @@ if __name__ == "__main__":
     pred_binary = (all_test_probs > 0.5).float()
     test_hamming_acc = (pred_binary == all_test_targets).float().mean().item()
     
-    tp = (pred_binary * all_targets).sum().item()
-    fp = (pred_binary * (1 - all_targets)).sum().item()
-    fn = ((1 - pred_binary) * all_targets).sum().item()
-    tn = ((1 - pred_binary) * (1 - all_targets)).sum().item()
+    tp = (pred_binary * all_test_targets).sum().item()
+    fp = (pred_binary * (1 - all_test_targets)).sum().item()
+    fn = ((1 - pred_binary) * all_test_targets).sum().item()
+    tn = ((1 - pred_binary) * (1 - all_test_targets)).sum().item()
     pos_agreement = tp / (tp + fp) if (tp + fp) > 0 else 0
     neg_agreement = tn / (tn + fn) if (tn + fn) > 0 else 0
     

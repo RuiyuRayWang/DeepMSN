@@ -4,41 +4,20 @@ import torch.nn.functional as F
 import numpy as np
 
 class DeepMSN(nn.Module):
-    def __init__(self, config, 
-                #  filter_size=256,
-                #  embed_dim=128, 
-                 internal_emb_dim=256, 
-                 early_hidden_dim=256, 
-                 num_early_lyr=2, 
-                 dropout=0.5,
-                 tsfm_hidden_dim=512, 
-                 num_tsfm_layers=4, 
-                 num_heads=8, 
-                 num_reg_tok=1):
-        super().__init__()
+    def __init__(self, config, embed_dim=128, internal_emb_dim=256, early_hidden_dim=256, num_early_lyr=2, dropout=0.5,
+                 tsfm_hidden_dim=512, num_tsfm_layers=6, num_heads=8, num_reg_tok=1):
+        
+        super(DeepMSN, self).__init__()
         
         output_dim = len(config['dataset']['data_path'])
+        self.project = nn.Linear(4, embed_dim, bias=False)
         
-        # self.project = nn.Linear(4, embed_dim, bias=False)
+        self.length_embedding = nn.Parameter(torch.randn(1, 500, embed_dim) / (float(embed_dim) ** 0.5), requires_grad=True)
+        # nn.init.trunc_normal_(self.pos_embedding, std=0.02)
         
-        # Simpler CNN block
-        self.cnn_block = nn.Sequential(
-            nn.Conv1d(4, internal_emb_dim, kernel_size=15, padding='same'),
-            nn.ReLU()
-        )
-        
-        # Add more dropout in critical places
-        # self.cnn_dropout = nn.Dropout(0.3)  # Add CNN dropout
-        # self.pos_dropout = nn.Dropout(0.2)   # Add positional dropout
-        
-        cls_tensor = torch.randn(1, num_reg_tok + 1, internal_emb_dim)  # Changed from embed_dim
-        cls_tensor = cls_tensor / (float(internal_emb_dim) ** 0.5)
-        self.cls_token = nn.Parameter(cls_tensor, requires_grad=True)
-        
-        # Update early_layers to match CNN output
         self.early_layers = nn.Sequential(
             ResidualBlock(
-                feat_in=internal_emb_dim,  # Changed from embed_dim
+                feat_in=embed_dim,
                 feat_out=internal_emb_dim,
                 feat_hidden=early_hidden_dim,
                 drop_out=dropout, 
@@ -52,12 +31,9 @@ class DeepMSN(nn.Module):
                 ) for _ in range(num_early_lyr - 1)
             )
         )
-                
-        # self.length_embedding = nn.Parameter(torch.randn(1, 500, embed_dim) / (float(embed_dim) ** 0.5), requires_grad=True)
-        # Add positional embedding AFTER CNN processing
-        self.pos_embedding = nn.Parameter(torch.zeros(1, 502, internal_emb_dim), requires_grad=True)  # +1 for CLS token
-        nn.init.trunc_normal_(self.pos_embedding, std=0.02)
-        
+        cls_tensor = torch.randn(1, num_reg_tok + 1, embed_dim)
+        cls_tensor = cls_tensor / (float(embed_dim) ** 0.5)
+        self.cls_token = nn.Parameter(cls_tensor, requires_grad=True)
         self.input_dropout = nn.Dropout(dropout)
         self.transformer = nn.Sequential(
             *(SwigluAttentionBlock(internal_emb_dim, tsfm_hidden_dim, num_heads, dropout=dropout) 
@@ -80,54 +56,46 @@ class DeepMSN(nn.Module):
             ),
             nn.Linear(tsfm_hidden_dim, output_dim, bias=True)
         )
-    
+
     def forward(self, x_in):
         """
-        x is a batch of one-hot-encoded sequences, returned is the predicted topic class vectorfor the batch of sequences
-        x.shape is (N, L, C) where N is batch size, L is the length of the sequence, C is the number of channels
+        x is a batch of image embeddings, returned is the predicted activation for the batch of image in a single voxel
+        x.shape is (N, L, C) where N is batch size, L is the length of the sequence, C is the number of channels (4) representing the one-hot encoded DNA sequence.
+        
+        x_in is the image embeddings for incontext learning: (B, S_ic, E)
+        ic_nrn is the neural activation for incontext learning: (B, S_ic)
+        unknown_img is the img embedding to predict: (B, S_uk, E)
         """
         
-        N, L, C = x_in.shape
-        # print(f"[DEBUG] Input shape: {x_in.shape}")
+        # print('[DEBUG] self.dropout', self.dropout)
         
-        # Step 1: Project to embedding space
-        # x = self.project(x_in)  # [N, L, embed_dim=128]
-        # print(f"[DEBUG] After project: {x.shape}")
+        B, S_ic, E = x_in.shape # batch, sequence length, channels
         
-        # Step 2: Apply CNN with depth expansion
-        x_cnn = x_in.transpose(1, 2)  # [N, C, L]
-        x_cnn = self.cnn_block(x_cnn)  # [N, embed_dim * 2 =256, L]
-        x = x_cnn.transpose(1, 2)  # [N, L, embed_dim * 2 =256]
-        # x = self.cnn_dropout(x)  # Apply CNN dropout
-        # print(f"[DEBUG] After CNN: {x.shape}")
+        # debug_info()
+        # print(f'[DEBUG] N, L, C: {x_in.shape}')   # N, L, C: torch.Size([1, 100, 512])
         
-        # Step 3: Add CLS token (now matching internal_emb_dim)
-        cls_token = self.cls_token.repeat(N, 1, 1)  # [N, 2, internal_emb_dim]
-        # print(f"[DEBUG] CLS token shape: {cls_token.shape}")
-        x = torch.cat([cls_token, x], dim=1)  # [N, 502, internal_emb_dim]
-        # print(f"[DEBUG] After adding CLS: {x.shape}")
+        x = self.project(x_in)  # [B, S, E+1]  batch, sequence length, emb_dim
         
-        # Step 4: Early layers (dimensions now align)
-        x = self.early_layers(x)  # [N, L+1, internal_emb_dim]
-        # print(f"[DEBUG] After early_layers: {x.shape}")
-        
-        # Step 5: Add positional embedding
+        # Add positional embedding if you want to use it:
         seq_len = x.shape[1]
-        # print(f"[DEBUG] seq_len: {seq_len}, pos_embedding shape: {self.pos_embedding.shape}")
+        x = x + self.length_embedding[:, :seq_len, :]  # Add positional encoding
         
-        x = x + self.pos_embedding[:, :seq_len, :]
-        # x = self.pos_dropout(x)  # Apply positional dropout
+        # # Add CLS token and positional encoding
+        cls_token = self.cls_token.repeat(B, 1, 1)  # [B, N, E+1]
+        x = torch.cat([cls_token, x], dim=1)  # [B, S+N, E+1]
+        x = self.early_layers(x)  # [B, S+N, E+1]
         
-        # Step 6: Transformer
+        '''Apply Transformer'''
+        # print('[DEBUG] type(x)', x.dtype)       # torch.float32
         x = self.input_dropout(x)
         x = self.transformer(x)
         
         # Perform hyperweights prediction
-        pred_tok = x[:, 0, :]  # [N, C+1]
+        pred_tok = x[:, 0, :]  # [B, E+1]
         
-        # print(f'[DEBUG] pred_tok.shape: {pred_tok.shape}')  # [N, C+1]
-        # weights = self.weight_pred(pred_tok)  # [N, C+1]
-        x = self.output_layer(pred_tok)  # [N, S+N, 18]
+        # print(f'[DEBUG] pred_tok.shape: {pred_tok.shape}')  # [B, E+1]
+        # weights = self.weight_pred(pred_tok)  # [B, E+1]
+        x = self.output_layer(pred_tok)  # [B, S+N, 18]
         
         return x
 

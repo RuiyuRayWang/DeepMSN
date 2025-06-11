@@ -3,20 +3,20 @@ tmp_dir: '/tmp'
 dataset:
   genome_fasta: 'data/resources/mm10.fa'
   chrom_sizes: 'data/resources/mm10.chrom.sizes'
-  out_dir: 'data/PB_CTdnsmpl_catlas_25_Topics_top_3k_5fold-rc'
+  out_dir: 'data/PB_CTdnsmpl_catlas_25_Topics_top_3k'
   out_fn: 'regions_and_topics.bed'
   bed_file:
   train_ratio: 0.7
   val_ratio: 0.15
   random_seed: 42
-  augment: True
+  augment: False
   augment_kwargs:
     random_shift: True
     num_windows: 5
     extension: 100
     window_size: 500
     stride: 50
-  rc: True  # reverse complement
+  rc: False  # reverse complement
   data_path:
     - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic1.bed', 0]
     - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic2.bed', 1]
@@ -52,7 +52,7 @@ train:
   epochs: 200
   num_workers: 1
   save_every_n_epochs: 50
-  resume_from_checkpoint: True
+  resume_from_checkpoint: False
   checkpoint:
-    path: 'checkpoints/dm_pb_ctdnsmpl_augmented_2025-06-03_08-37-49'
+    path: 
     resume_from_epoch: 50

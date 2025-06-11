@@ -159,7 +159,8 @@ if __name__ == "__main__":
     
     # Define loss function
     # loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
-    loss_fn = nn.BCEWithLogitsLoss()
+    # loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.BCELoss()
     
     # Tracking for analysis
     train_losses = []
@@ -254,6 +255,14 @@ if __name__ == "__main__":
         hamming_acc = (pred_binary == all_targets).float().mean().item()
         hamming_accs.append(hamming_acc)
         
+        # Calculate positive/negative agreement
+        tp = (pred_binary * all_targets).sum().item()
+        fp = (pred_binary * (1 - all_targets)).sum().item()
+        fn = ((1 - pred_binary) * all_targets).sum().item()
+        tn = ((1 - pred_binary) * (1 - all_targets)).sum().item()
+        pos_agreement = tp / (tp + fp) if (tp + fp) > 0 else 0
+        neg_agreement = tn / (tn + fn) if (tn + fn) > 0 else 0
+        
         # Print metrics with overfitting indicators
         train_val_ratio = val_loss / avg_train_loss if avg_train_loss > 0 else float('inf')
         train_val_ratios.append(train_val_ratio)
@@ -266,6 +275,7 @@ if __name__ == "__main__":
         print(f"Train Loss: {avg_train_loss:.6f}")
         print(f"Val Loss: {val_loss:.6f} (ratio: {train_val_ratio:.2f}) {overfitting_indicator}")
         print(f"Exact Match Acc: {exact_match_acc:.4f}, Hamming Acc: {hamming_acc:.4f}")
+        print(f"Positive Agreement: {pos_agreement:.4f}, Negative Agreement: {neg_agreement:.4f}")
         print(f"Current LR: {optimizer.param_groups[0]['lr']:.2e}")
         print("\n")
         
@@ -276,6 +286,8 @@ if __name__ == "__main__":
             'val_loss': val_loss,
             'exact_match_acc': exact_match_acc,
             'hamming_acc': hamming_acc,
+            'positive_agreement': pos_agreement,
+            'negative_agreement': neg_agreement,
             'learning_rate': current_lr,
             'train_val_ratio': train_val_ratio
         }
@@ -352,10 +364,19 @@ if __name__ == "__main__":
     pred_binary = (all_test_probs > 0.5).float()
     test_hamming_acc = (pred_binary == all_test_targets).float().mean().item()
     
+    tp = (pred_binary * all_targets).sum().item()
+    fp = (pred_binary * (1 - all_targets)).sum().item()
+    fn = ((1 - pred_binary) * all_targets).sum().item()
+    tn = ((1 - pred_binary) * (1 - all_targets)).sum().item()
+    pos_agreement = tp / (tp + fp) if (tp + fp) > 0 else 0
+    neg_agreement = tn / (tn + fn) if (tn + fn) > 0 else 0
+    
     print(f"Final Test Results:")
     print(f"  Test Loss: {test_loss:.6f}")
     print(f"  Exact Match Accuracy: {test_exact_acc:.4f}")
     print(f"  Hamming Accuracy: {test_hamming_acc:.4f}")
+    print(f"  Positive Agreement: {pos_agreement:.4f}")
+    print(f"  Negative Agreement: {neg_agreement:.4f}")
     
     # Save final statistics
     final_stats = {
@@ -373,7 +394,9 @@ if __name__ == "__main__":
         'test_stats': {
             'test_loss': test_loss,
             'test_exact_match_acc': test_exact_acc,
-            'test_hamming_acc': test_hamming_acc
+            'test_hamming_acc': test_hamming_acc,
+            'test_positive_agreement': pos_agreement,
+            'test_negative_agreement': neg_agreement,
         }
     }
     
