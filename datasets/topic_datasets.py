@@ -37,7 +37,7 @@ class TopicDataset(Dataset):
         self.augment = self.config.get('augment', False)
         self.augment_kwargs = self.config.get('augment_kwargs', {})
         
-        self.augment_multiplier = self.augment_kwargs.get('augment_multiplier', 50) if self.augment else 1
+        self.augment_multiplier = self.augment_kwargs.get('augment_multiplier', 3) if self.augment else 1
     
     def __len__(self):
         """
@@ -72,7 +72,7 @@ class TopicDataset(Dataset):
         # Extract sequence
         seq = str(fasta[chrom][start:end]).upper()
         
-        # Always apply reverse complement augmentation probabilistically if enabled
+        # # Always apply reverse complement augmentation probabilistically if enabled
         is_rc = False
         if self.augment:
             rc_prob = self.augment_kwargs.get('rc_prob', 0.0)
@@ -104,14 +104,14 @@ class TopicDataset(Dataset):
             'augment_variant': augment_variant,
             'is_rc': is_rc
         }
-
+    
     def apply_random_shift(self, original_start, original_end, chrom, fasta):
         """
         Apply random shift augmentation by extending the region and randomly shifting within it.
         Takes chromosome boundaries into account to prevent exceeding chromosome limits.
         """
         original_length = original_end - original_start
-        extension = self.augment_kwargs.get('extension', 100)
+        extension = self.augment_kwargs.get('extension', 50)
         
         # Get chromosome size - use fasta length if chrom_sizes not available
         chrom_sizes_file = self.config.get('chrom_sizes', None)

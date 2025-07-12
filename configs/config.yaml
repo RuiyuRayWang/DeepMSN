@@ -6,17 +6,15 @@ dataset:
   out_dir: 'data/PB_CTdnsmpl_catlas_25_Topics_top_3k'
   out_fn: 'regions_and_topics.bed'
   bed_file:
-  train_ratio: 0.7
-  val_ratio: 0.15
+  train_ratio: 0.6
+  val_ratio: 0.2
   random_seed: 42
-  augment: False
+  augment: True
   augment_kwargs:
     random_shift: True
-    num_windows: 5
-    extension: 100
-    window_size: 500
-    stride: 50
-  rc: False  # reverse complement
+    augment_multiplier: 2
+    extension: 50
+    rc_prob: 0.3
   data_path:
     - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic1.bed', 0]
     - ['data/PB_CTdnsmpl_catlas_25_Topics_top_3k/bed/Topic2.bed', 1]

@@ -2,34 +2,37 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from utils.utils import reverse_complement
 
 class DeepMSN(nn.Module):
     def __init__(self, config, 
-                #  filter_size=256,
+                 filter_size=512,
                 #  embed_dim=128, 
-                 internal_emb_dim=256, 
-                 early_hidden_dim=256, 
+                 internal_emb_dim=64, 
+                 early_hidden_dim=64, 
                  num_early_lyr=2, 
                  dropout=0.5,
-                 tsfm_hidden_dim=512, 
-                 num_tsfm_layers=4, 
+                 tsfm_hidden_dim=128, 
+                 num_tsfm_layers=2, 
                  num_heads=8, 
                  num_reg_tok=1):
         super().__init__()
         
         output_dim = len(config['dataset']['data_path'])
         
-        # self.project = nn.Linear(4, embed_dim, bias=False)
-        
-        # Simpler CNN block
+        # Replace lines 22-28
         self.cnn_block = nn.Sequential(
-            nn.Conv1d(4, internal_emb_dim, kernel_size=15, padding='same'),
-            nn.ReLU()
+            nn.Conv1d(4, filter_size, kernel_size=15, stride=1, padding=7),  # Keep sequence length
+            nn.BatchNorm1d(filter_size),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=3, stride=1, padding=1),  # Local max pooling for feature enhancement
+            nn.Dropout1d(0.4)
         )
+
+        # Add a simple residual pathway for the input
+        self.input_projection = nn.Conv1d(4, filter_size, kernel_size=1)  # Project input to match CNN output
         
-        # Add more dropout in critical places
-        # self.cnn_dropout = nn.Dropout(0.3)  # Add CNN dropout
-        # self.pos_dropout = nn.Dropout(0.2)   # Add positional dropout
+        self.cnn_projection = nn.Linear(2 * filter_size, internal_emb_dim)
         
         cls_tensor = torch.randn(1, num_reg_tok + 1, internal_emb_dim)  # Changed from embed_dim
         cls_tensor = cls_tensor / (float(internal_emb_dim) ** 0.5)
@@ -48,17 +51,19 @@ class DeepMSN(nn.Module):
                     feat_in=internal_emb_dim,
                     feat_out=internal_emb_dim,
                     feat_hidden=early_hidden_dim,
-                    drop_out=dropout, use_norm=True
+                    drop_out=dropout,
+                    use_norm=True
                 ) for _ in range(num_early_lyr - 1)
             )
         )
-                
+        
         # self.length_embedding = nn.Parameter(torch.randn(1, 500, embed_dim) / (float(embed_dim) ** 0.5), requires_grad=True)
-        # Add positional embedding AFTER CNN processing
-        self.pos_embedding = nn.Parameter(torch.zeros(1, 502, internal_emb_dim), requires_grad=True)  # +1 for CLS token
-        nn.init.trunc_normal_(self.pos_embedding, std=0.02)
+        # Add positional encoding AFTER CNN processing
+        self.pos_encoding = nn.Parameter(torch.zeros(1, 502, internal_emb_dim), requires_grad=True)  # +1 for CLS token
+        nn.init.trunc_normal_(self.pos_encoding, std=0.01)
         
         self.input_dropout = nn.Dropout(dropout)
+        
         self.transformer = nn.Sequential(
             *(SwigluAttentionBlock(internal_emb_dim, tsfm_hidden_dim, num_heads, dropout=dropout) 
             for _ in range(num_tsfm_layers))
@@ -75,7 +80,8 @@ class DeepMSN(nn.Module):
                     feat_in=tsfm_hidden_dim,
                     feat_out=tsfm_hidden_dim,
                     feat_hidden=tsfm_hidden_dim,
-                    drop_out=dropout, use_norm=False
+                    drop_out=dropout,
+                    use_norm=False
                 ) for _ in range(num_early_lyr - 1)
             ),
             nn.Linear(tsfm_hidden_dim, output_dim, bias=True)
@@ -88,49 +94,47 @@ class DeepMSN(nn.Module):
         """
         
         N, L, C = x_in.shape
-        # print(f"[DEBUG] Input shape: {x_in.shape}")
+    
+        # Step 1: Apply reverse complement and transpose
+        x = x_in.transpose(1, 2)  # [N, C, L]
+        x_rc = reverse_complement(x_in).transpose(1, 2)  # [N, C, L]
         
-        # Step 1: Project to embedding space
-        # x = self.project(x_in)  # [N, L, embed_dim=128]
-        # print(f"[DEBUG] After project: {x.shape}")
+        # Step 2: Apply CNN with residual connection
+        x_cnn = self.cnn_block(x)  # [N, filter_size, L]
+        x_cnn_rc = self.cnn_block(x_rc)  # [N, filter_size, L]
         
-        # Step 2: Apply CNN with depth expansion
-        x_cnn = x_in.transpose(1, 2)  # [N, C, L]
-        x_cnn = self.cnn_block(x_cnn)  # [N, embed_dim * 2 =256, L]
-        x = x_cnn.transpose(1, 2)  # [N, L, embed_dim * 2 =256]
-        # x = self.cnn_dropout(x)  # Apply CNN dropout
-        # print(f"[DEBUG] After CNN: {x.shape}")
+        # Add residual connection from input
+        x_skip = self.input_projection(x)  # [N, filter_size, L]
+        x_skip_rc = self.input_projection(x_rc)  # [N, filter_size, L]
         
-        # Step 3: Add CLS token (now matching internal_emb_dim)
+        x_cnn = x_cnn + x_skip  # Residual connection
+        x_cnn_rc = x_cnn_rc + x_skip_rc  # Residual connection
+        
+        x_cnn = torch.cat([x_cnn, x_cnn_rc], dim=1)  # [N, filter_size * 2, L]
+        x = x_cnn.transpose(1, 2)  # [N, L, filter_size * 2]
+        
+        x = self.cnn_projection(x)  # [N, L, internal_emb_dim]
+        
+        # Step 3: Add CLS token
         cls_token = self.cls_token.repeat(N, 1, 1)  # [N, 2, internal_emb_dim]
-        # print(f"[DEBUG] CLS token shape: {cls_token.shape}")
         x = torch.cat([cls_token, x], dim=1)  # [N, 502, internal_emb_dim]
-        # print(f"[DEBUG] After adding CLS: {x.shape}")
         
-        # Step 4: Early layers (dimensions now align)
+        # Step 4: Early processing
         x = self.early_layers(x)  # [N, L+1, internal_emb_dim]
-        # print(f"[DEBUG] After early_layers: {x.shape}")
         
-        # Step 5: Add positional embedding
+        # Step 5: Add positional encoding
         seq_len = x.shape[1]
-        # print(f"[DEBUG] seq_len: {seq_len}, pos_embedding shape: {self.pos_embedding.shape}")
-        
-        x = x + self.pos_embedding[:, :seq_len, :]
-        # x = self.pos_dropout(x)  # Apply positional dropout
+        x = x + self.pos_encoding[:, :seq_len, :]
         
         # Step 6: Transformer
         x = self.input_dropout(x)
         x = self.transformer(x)
         
-        # Perform hyperweights prediction
+        # Output prediction
         pred_tok = x[:, 0, :]  # [N, C+1]
-        
-        # print(f'[DEBUG] pred_tok.shape: {pred_tok.shape}')  # [N, C+1]
-        # weights = self.weight_pred(pred_tok)  # [N, C+1]
-        x = self.output_layer(pred_tok)  # [N, S+N, 18]
+        x = self.output_layer(pred_tok)
         
         return x
-
 
 class SwiGLUFFN(nn.Module):
     '''no auto determined hidden size'''
@@ -146,12 +150,8 @@ class SwiGLUFFN(nn.Module):
         hidden = F.silu(x1) * x2
         return self.linear2(hidden)
 
-
 class SwigluAttentionBlock(nn.Module):
     def __init__(self, embed_dim, tsfm_hidden_dim, num_heads, dropout=0.0):
-        """Conventional attention + swiglu and attention residual
-        """
-        
         super().__init__()
         
         self.layer_norm_1 = nn.LayerNorm(embed_dim)
@@ -159,16 +159,19 @@ class SwigluAttentionBlock(nn.Module):
         self.attn_dropout = nn.Dropout(dropout)
         self.layer_norm_2 = nn.LayerNorm(embed_dim)
         self.ffn = SwiGLUFFN(embed_dim, tsfm_hidden_dim, embed_dim)
+        self.ffn_dropout = nn.Dropout(dropout * 0.5)
     
     def forward(self, x):
+        # Attention block
         inp_x = self.layer_norm_1(x)
-        log_scale = np.log(inp_x.shape[-2])
+        attn_output, _ = self.attn(inp_x, inp_x, inp_x, need_weights=False)
+        x = x + self.attn_dropout(attn_output)
         
-        attn_output, _ = self.attn(log_scale * inp_x, inp_x, inp_x, need_weights=False)
-        x = x + self.attn_dropout(attn_output)  # Apply dropout to the attention output
-        x = x + self.ffn(self.layer_norm_2(x))
+        # FFN block
+        ffn_out = self.ffn(self.layer_norm_2(x))
+        x = x + self.ffn_dropout(ffn_out)
+        
         return x
-
 
 class ResidualBlock(nn.Module):
     # Follows "Identity Mappings in Deep Residual Networks", uses LayerNorm instead of BatchNorm, and LeakyReLU instead of ReLU
